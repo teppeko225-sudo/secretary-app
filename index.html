@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>マイ秘書アプリ</title>
+  <!-- 描画前にテーマを決定してちらつきを防ぐ -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('theme');
+      var sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', saved || sys);
+    })();
+  </script>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --surface: #ffffff;
+      --surface-2: #fafbfc;
+      --border: #e8e9ee;
+      --border-strong: #dcdee5;
+      --text: #191b22;
+      --text-2: #4a4f5a;
+      --muted: #8b909c;
+      --accent: #5b5bd6;
+      --accent-2: #8b5cf6;
+      --teal: #0d9488;
+      --amber: #d97706;
+      --red: #dc2626;
+      --green: #16a34a;
+      --shadow-sm: 0 1px 2px rgba(16,18,26,.05);
+      --shadow: 0 1px 3px rgba(16,18,26,.05), 0 10px 30px rgba(16,18,26,.05);
+      --radius: 16px;
+    }
+    :root[data-theme="dark"] {
+      --bg: #0e0f13;
+      --surface: #17181e;
+      --surface-2: #1c1e26;
+      --border: #262832;
+      --border-strong: #333644;
+      --text: #e7e8ec;
+      --text-2: #b4b7c0;
+      --muted: #7c8090;
+      --accent: #8484f2;
+      --accent-2: #a78bfa;
+      --teal: #2dd4bf;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --green: #4ade80;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+      --shadow: 0 1px 3px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Inter", "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", system-ui, sans-serif;
+      margin: 0;
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      background:
+        radial-gradient(1100px 460px at 50% -8%, color-mix(in srgb, var(--accent) 10%, var(--bg)), transparent),
+        var(--bg);
+      transition: background-color .3s ease, color .3s ease;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      position: sticky; top: 0; z-index: 20;
+      background: color-mix(in srgb, var(--surface) 78%, transparent);
+      backdrop-filter: saturate(180%) blur(12px);
+      -webkit-backdrop-filter: saturate(180%) blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .head-inner {
+      max-width: 980px; margin: 0 auto;
+      padding: 14px 22px;
+      display: flex; align-items: center; gap: 13px;
+    }
+    .logo {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: grid; place-items: center; font-size: 17px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+    .title-wrap { display: flex; flex-direction: column; }
+    header h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+    .tagline { font-size: 12px; color: var(--muted); }
+    .theme-btn {
+      margin-left: auto;
+      width: 38px; height: 38px; border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 16px; cursor: pointer;
+      display: grid; place-items: center;
+      transition: background .15s, border-color .15s, transform .1s;
+    }
+    .theme-btn:hover { border-color: var(--border-strong); background: var(--surface-2); }
+    .theme-btn:active { transform: scale(.94); }
+
+    .container { max-width: 980px; margin: 0 auto; padding: 26px 22px 60px; }
+
+    /* ===== セクション見出し（エリアラベル） ===== */
+    .eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--muted);
+      margin: 0 4px 12px;
+    }
+
+    /* ===== ダッシュボード ===== */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 30px;
+    }
+    .stat {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 17px 18px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .stat:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--border-strong); }
+    .stat-icon {
+      width: 42px; height: 42px; flex: 0 0 42px;
+      border-radius: 12px; display: grid; place-items: center; font-size: 19px;
+      background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+    }
+    .stat.warn .stat-icon { background: color-mix(in srgb, var(--amber) 15%, var(--surface)); }
+    .stat.cal  .stat-icon { background: color-mix(in srgb, var(--teal) 15%, var(--surface)); }
+    .stat .num {
+      font-size: 27px; font-weight: 700; line-height: 1.05;
+      letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+    }
+    .stat .label { font-size: 12px; color: var(--muted); margin-top: 3px; letter-spacing: .01em; }
+    .stat.warn .num { color: var(--amber); }
+    .stat.cal  .num { color: var(--teal); }
+
+    /* ===== カード ===== */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card h2 {
+      margin: 0 0 18px;
+      font-size: 15.5px; font-weight: 700; letter-spacing: -.01em;
+      display: flex; align-items: center; gap: 9px;
+    }
+    .count {
+      font-size: 12px; font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      border-radius: 999px; padding: 2px 10px; margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== 2カラム ===== */
+    .grid-2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;
+    }
+    .grid-2 .card { margin-bottom: 0; }
+    @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ===== フォーム ===== */
+    .form {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 15px;
+      margin-bottom: 18px;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      font-size: 14px; font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      margin-bottom: 11px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+    textarea { resize: vertical; min-height: 70px; }
+
+    button {
+      cursor: pointer; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      padding: 11px 18px;
+      transition: background .15s, transform .1s, box-shadow .15s, border-color .15s, color .15s;
+    }
+    button:active { transform: translateY(1px); }
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 38%, transparent);
+    }
+    .btn-primary:hover { filter: brightness(1.06); box-shadow: 0 5px 16px color-mix(in srgb, var(--accent) 45%, transparent); }
+    .btn-block { width: 100%; }
+
+    /* ===== リスト ===== */
+    ul { list-style: none; margin: 0; padding: 0; }
+    li {
+      border-top: 1px solid var(--border);
+      padding: 15px 6px;
+      display: flex; align-items: flex-start; gap: 12px;
+      transition: background .12s;
+    }
+    li:first-child { border-top: none; }
+    li:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); border-radius: 10px; }
+    .item-body { flex: 1; min-width: 0; }
+    .item-title { font-weight: 600; word-break: break-word; letter-spacing: -.005em; }
+    .item-content {
+      white-space: pre-wrap; word-break: break-word;
+      margin-top: 4px; color: var(--text-2); font-size: 14px;
+    }
+    .meta { font-size: 12px; color: var(--muted); margin-top: 7px; display: flex; align-items: center; gap: 5px; }
+    .empty {
+      color: var(--muted); font-size: 14px;
+      padding: 30px 8px; line-height: 1.7; text-align: center;
+    }
+    code {
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+      padding: 2px 7px; border-radius: 6px; font-size: 13px;
+      color: var(--accent); font-family: ui-monospace, "SFMono-Regular", monospace;
+    }
+
+    /* ===== タスク ===== */
+    li.task-done { opacity: .6; }
+    .task-done .task-text { text-decoration: line-through; color: var(--muted); }
+    .task-check {
+      width: 19px; height: 19px; margin-top: 3px;
+      accent-color: var(--accent); cursor: pointer; flex: 0 0 auto;
+    }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 2px 9px; border-radius: 999px; margin-left: 7px;
+      vertical-align: middle; letter-spacing: .02em;
+    }
+    .badge-open { background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber); }
+    .badge-done { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); }
+
+    /* ===== 小ボタン ===== */
+    .btn-small {
+      background: var(--surface-2); color: var(--text-2);
+      padding: 7px 12px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .btn-small:hover { border-color: var(--border-strong); background: var(--surface); }
+    .btn-icon {
+      background: transparent; color: var(--muted);
+      padding: 6px 8px; font-size: 15px; line-height: 1; border-radius: 8px;
+    }
+    .btn-icon:hover { background: color-mix(in srgb, var(--red) 14%, transparent); color: var(--red); }
+
+    /* ===== カレンダー ===== */
+    .cal-head { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+    .cal-event {
+      display: flex; align-items: center; gap: 13px;
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      margin-bottom: 11px;
+      background: var(--surface-2);
+      transition: border-color .15s, transform .15s;
+    }
+    .cal-event:hover { border-color: var(--border-strong); transform: translateX(2px); }
+    .cal-event:last-child { margin-bottom: 0; }
+    .cal-date {
+      flex: 0 0 auto; text-align: center;
+      background: color-mix(in srgb, var(--accent) 13%, transparent);
+      color: var(--accent);
+      border-radius: 11px; padding: 7px 11px; min-width: 60px; line-height: 1.15;
+    }
+    .cal-date .d { font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+    .cal-date .m { font-size: 11px; font-weight: 600; }
+    .cal-time { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ===== 最新の振り返り（ダッシュボード） ===== */
+    .latest {
+      position: relative; overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px 20px 24px;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow-sm);
+      background:
+        linear-gradient(135deg,
+          color-mix(in srgb, var(--accent) 10%, var(--surface)),
+          color-mix(in srgb, var(--accent-2) 8%, var(--surface)));
+    }
+    .latest::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    }
+    .latest-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; letter-spacing: .04em;
+      color: var(--accent); margin-bottom: 8px;
+    }
+    .latest-week { font-weight: 700; font-size: 14px; color: var(--text); }
+    .latest-range { color: var(--muted); font-weight: 500; font-size: 12.5px; margin-left: 6px; }
+    .latest-body {
+      white-space: pre-wrap; word-break: break-word;
+      color: var(--text-2); font-size: 14px; margin-top: 7px;
+    }
+
+    /* ===== 週選択 ===== */
+    .week-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+    .week-label { font-size: 12.5px; font-weight: 600; color: var(--muted); flex: 0 0 auto; }
+    input[type="week"] {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      font-size: 14px; font-family: inherit;
+      background: var(--surface); color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+      color-scheme: light dark;
+    }
+    input[type="week"]:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+    .review-week-tag {
+      display: inline-block; font-size: 12px; font-weight: 700;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      border-radius: 8px; padding: 2px 9px; margin-bottom: 2px;
+    }
+    .review-range { color: var(--muted); font-size: 12px; margin-left: 6px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="head-inner">
+      <div class="logo">🗒️</div>
+      <div class="title-wrap">
+        <h1>マイ秘書アプリ</h1>
+        <span class="tagline">あなた専用のダッシュボード</span>
+      </div>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="テーマ切り替え" aria-label="テーマ切り替え">🌙</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ダッシュボード -->
+    <p class="eyebrow">概要</p>
+    <section class="dashboard">
+      <div class="stat">
+        <div class="stat-icon">📝</div>
+        <div><div class="num" id="stat-memos">0</div><div class="label">メモ</div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-icon">✅</div>
+        <div><div class="num" id="stat-tasks">0</div><div class="label">タスク</div></div>
+      </div>
+      <div class="stat warn">
+        <div class="stat-icon">⏳</div>
+        <div><div class="num" id="stat-open">0</div><div class="label">未完了タスク</div></div>
+      </div>
+      <div class="stat cal">
+        <div class="stat-icon">📅</div>
+        <div><div class="num" id="stat-events">-</div><div class="label">今後の予定</div></div>
+      </div>
+    </section>
+
+    <!-- 最新の振り返り（ダッシュボード） -->
+    <section class="latest" id="latest-review">
+      <div class="empty">読み込み中...</div>
+    </section>
+
+    <!-- Googleカレンダー -->
+    <p class="eyebrow">スケジュール</p>
+    <section class="card">
+      <h2>📅 Googleカレンダー</h2>
+      <div id="cal-area"><div class="empty">読み込み中...</div></div>
+    </section>
+
+    <!-- 週次の振り返り -->
+    <p class="eyebrow">週次の振り返り</p>
+    <section class="card">
+      <h2>🪞 週次の振り返り <span class="count" id="review-count">0</span></h2>
+      <div class="form">
+        <div class="week-row">
+          <label class="week-label" for="review-week">対象の週</label>
+          <input type="week" id="review-week" />
+        </div>
+        <textarea id="review-comment" placeholder="今週の振り返り（できたこと・課題・来週やること など）"></textarea>
+        <button class="btn-primary btn-block" onclick="saveReview()">この週の振り返りを保存</button>
+      </div>
+      <ul id="review-list"></ul>
+    </section>
+
+    <!-- メモ / タスク 2カラム -->
+    <p class="eyebrow">ワークスペース</p>
+    <div class="grid-2">
+      <section class="card">
+        <h2>📝 メモ <span class="count" id="memo-count">0</span></h2>
+        <div class="form">
+          <input type="text" id="memo-title" placeholder="タイトル" />
+          <textarea id="memo-content" placeholder="本文"></textarea>
+          <button class="btn-primary btn-block" onclick="addMemo()">＋ メモを追加</button>
+        </div>
+        <ul id="memo-list"></ul>
+      </section>
+
+      <section class="card">
+        <h2>✅ タスク <span class="count" id="task-count">0</span></h2>
+        <div class="form">
+          <input type="text" id="task-text" placeholder="やること" onkeydown="if(event.key==='Enter')addTask()" />
+          <button class="btn-primary btn-block" onclick="addTask()">＋ タスクを追加</button>
+        </div>
+        <ul id="task-list"></ul>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ===== テーマ切り替え =====
+    function updateThemeIcon() {
+      const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.getElementById('theme-btn').textContent = dark ? '☀️' : '🌙';
+    }
+    function toggleTheme() {
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateThemeIcon();
+    }
+    updateThemeIcon();
+
+    // ===== 共通 =====
+    function fmt(iso) {
+      const d = new Date(iso);
+      const p = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    function esc(s) {
+      return (s || '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // ===== 週(ISO週)ユーティリティ =====
+    // 現在のISO週を "YYYY-Www" で返す
+    function currentIsoWeek() {
+      const d = new Date();
+      const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dayNr = (t.getUTCDay() + 6) % 7;      // 月曜=0
+      t.setUTCDate(t.getUTCDate() - dayNr + 3);   // その週の木曜へ
+      const firstThu = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+      const week = 1 + Math.round(((t - firstThu) / 86400000 - 3 + ((firstThu.getUTCDay() + 6) % 7)) / 7);
+      return t.getUTCFullYear() + '-W' + String(week).padStart(2, '0');
+    }
+    // "YYYY-Www" の週の月曜日(UTC)を返す
+    function isoWeekMonday(weekStr) {
+      const [y, w] = weekStr.split('-W').map(Number);
+      const jan4 = new Date(Date.UTC(y, 0, 4));
+      const jan4Dow = (jan4.getUTCDay() + 6) % 7;
+      const week1Mon = new Date(jan4);
+      week1Mon.setUTCDate(jan4.getUTCDate() - jan4Dow);
+      const mon = new Date(week1Mon);
+      mon.setUTCDate(week1Mon.getUTCDate() + (w - 1) * 7);
+      return mon;
+    }
+    // 週の日付範囲ラベル（例: "7/6〜7/12"）
+    function weekRangeLabel(weekStr) {
+      const mon = isoWeekMonday(weekStr);
+      const sun = new Date(mon);
+      sun.setUTCDate(mon.getUTCDate() + 6);
+      return `${mon.getUTCMonth() + 1}/${mon.getUTCDate()}〜${sun.getUTCMonth() + 1}/${sun.getUTCDate()}`;
+    }
+    // 週の見出しラベル（例: "2026年 第28週"）
+    function weekTitle(weekStr) {
+      const [y, w] = weekStr.split('-W');
+      return `${y}年 第${Number(w)}週`;
+    }
+
+    async function api(method, url, body) {
+      const opt = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opt.body = JSON.stringify(body);
+      const res = await fetch(url, opt);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || '通信エラー');
+      return data;
+    }
+
+    async function refresh() {
+      const data = await api('GET', '/api/data');
+      render(data);
+      loadCalendar();
+    }
+
+    // ===== カレンダー =====
+    function eventDateParts(iso) {
+      const d = new Date(iso);
+      const w = ['日','月','火','水','木','金','土'][d.getDay()];
+      const p = (n) => String(n).padStart(2, '0');
+      return { day: d.getDate(), month: (d.getMonth() + 1) + '月', weekday: w, time: `${p(d.getHours())}:${p(d.getMinutes())}` };
+    }
+
+    async function loadCalendar() {
+      const area = document.getElementById('cal-area');
+      const statEl = document.getElementById('stat-events');
+      let status;
+      try { status = await api('GET', '/api/google/status'); } catch (e) { return; }
+
+      if (!status.hasCredentials) {
+        statEl.textContent = '-';
+        area.innerHTML = `<div class="empty">
+          連携するには <code>credentials.json</code> の設置が必要です。<br>
+          READMEの「Googleカレンダー連携の設定」を参照してください。</div>`;
+        return;
+      }
+      if (!status.connected) {
+        statEl.textContent = '-';
+        area.innerHTML = `<div class="empty" style="padding-bottom:14px">まだGoogleと連携していません。</div>
+          <div style="text-align:center"><a href="/auth/google"><button class="btn-primary">Googleと連携する</button></a></div>`;
+        return;
+      }
+      try {
+        const res = await api('GET', '/api/calendar/events');
+        const events = res.events || [];
+        statEl.textContent = events.length;
+        let html = `<div class="cal-head"><button class="btn-small" onclick="disconnectGoogle()">連携解除</button></div>`;
+        if (!events.length) {
+          html += '<div class="empty">今後の予定はありません 🎉</div>';
+        } else {
+          html += events.map(ev => {
+            const p = eventDateParts(ev.start);
+            return `<div class="cal-event">
+              <div class="cal-date"><div class="d">${p.day}</div><div class="m">${p.month}(${p.weekday})</div></div>
+              <div class="item-body">
+                <div class="item-title">${esc(ev.summary)}</div>
+                <div class="cal-time">🕒 ${ev.allDay ? '終日' : p.time}${ev.location ? ' ／ 📍' + esc(ev.location) : ''}</div>
+              </div>
+              ${ev.htmlLink ? `<a href="${esc(ev.htmlLink)}" target="_blank"><button class="btn-small">開く</button></a>` : ''}
+            </div>`;
+          }).join('');
+        }
+        area.innerHTML = html;
+      } catch (e) {
+        statEl.textContent = '!';
+        area.innerHTML = `<div class="empty">予定の取得に失敗しました: ${esc(e.message)}<br>
+          <button class="btn-small" onclick="disconnectGoogle()">連携し直す</button></div>`;
+      }
+    }
+
+    async function disconnectGoogle() {
+      if (!confirm('Googleカレンダーとの連携を解除しますか?')) return;
+      await api('POST', '/api/google/disconnect');
+      loadCalendar();
+    }
+
+    (function handleGoogleReturn() {
+      const params = new URLSearchParams(location.search);
+      const g = params.get('google');
+      if (g === 'connected') alert('Googleカレンダーと連携しました');
+      else if (g === 'error') alert('連携に失敗しました。もう一度お試しください。');
+      if (g) history.replaceState(null, '', location.pathname);
+    })();
+
+    // ===== 描画 =====
+    function render(data) {
+      const memos = data.memos || [];
+      const tasks = data.tasks || [];
+      const reviews = data.reviews || [];
+
+      document.getElementById('stat-memos').textContent = memos.length;
+      document.getElementById('stat-tasks').textContent = tasks.length;
+      document.getElementById('stat-open').textContent = tasks.filter(t => !t.done).length;
+      document.getElementById('memo-count').textContent = memos.length;
+      document.getElementById('task-count').textContent = tasks.length;
+      document.getElementById('review-count').textContent = reviews.length;
+
+      renderLatestReview(reviews);
+      renderReviewList(reviews);
+
+      const ml = document.getElementById('memo-list');
+      ml.innerHTML = memos.length ? '' : '<li class="empty">メモはまだありません</li>';
+      memos.forEach(m => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="item-body">
+            <div class="item-title">${esc(m.title) || '(無題)'}</div>
+            ${m.content ? `<div class="item-content">${esc(m.content)}</div>` : ''}
+            <div class="meta">🕒 ${fmt(m.createdAt)}</div>
+          </div>
+          <button class="btn-icon" title="削除" onclick="delMemo('${m.id}')">🗑</button>`;
+        ml.appendChild(li);
+      });
+
+      const tl = document.getElementById('task-list');
+      tl.innerHTML = tasks.length ? '' : '<li class="empty">タスクはまだありません</li>';
+      tasks.forEach(t => {
+        const li = document.createElement('li');
+        if (t.done) li.className = 'task-done';
+        li.innerHTML = `
+          <input type="checkbox" class="task-check" ${t.done ? 'checked' : ''} onchange="toggleTask('${t.id}', this.checked)" />
+          <div class="item-body">
+            <div class="task-text">${esc(t.text)}
+              <span class="badge ${t.done ? 'badge-done' : 'badge-open'}">${t.done ? '完了' : '未完了'}</span>
+            </div>
+            <div class="meta">🕒 ${fmt(t.createdAt)}</div>
+          </div>
+          <button class="btn-icon" title="削除" onclick="delTask('${t.id}')">🗑</button>`;
+        tl.appendChild(li);
+      });
+    }
+
+    // ===== 週次の振り返り =====
+    // ダッシュボードの「最新の振り返り」
+    function renderLatestReview(reviews) {
+      const el = document.getElementById('latest-review');
+      if (!reviews.length) {
+        el.innerHTML = `<div class="latest-head">🪞 最新の振り返り</div>
+          <div class="empty" style="padding:6px 0;text-align:left">まだ振り返りがありません。下の「週次の振り返り」から記録できます。</div>`;
+        return;
+      }
+      const r = reviews[0]; // 週の新しい順に並んでいる先頭が最新
+      el.innerHTML = `
+        <div class="latest-head">🪞 最新の振り返り</div>
+        <div>
+          <span class="latest-week">${weekTitle(r.week)}</span>
+          <span class="latest-range">${weekRangeLabel(r.week)}</span>
+        </div>
+        <div class="latest-body">${esc(r.comment)}</div>`;
+    }
+
+    // 振り返りの履歴一覧
+    function renderReviewList(reviews) {
+      const rl = document.getElementById('review-list');
+      rl.innerHTML = reviews.length ? '' : '<li class="empty">保存された振り返りはまだありません</li>';
+      reviews.forEach(r => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="item-body">
+            <div>
+              <span class="review-week-tag">${weekTitle(r.week)}</span>
+              <span class="review-range">${weekRangeLabel(r.week)}</span>
+            </div>
+            <div class="item-content">${esc(r.comment)}</div>
+            <div class="meta">🕒 ${fmt(r.updatedAt || r.createdAt)} 更新</div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn-icon" title="編集" onclick="editReview('${r.week}')">✏️</button>
+            <button class="btn-icon" title="削除" onclick="delReview('${r.id}')">🗑</button>
+          </div>`;
+        rl.appendChild(li);
+      });
+      // 編集用に現在の一覧を保持
+      window.__reviews = reviews;
+    }
+
+    async function saveReview() {
+      const week = document.getElementById('review-week').value;
+      const comment = document.getElementById('review-comment');
+      if (!week) { alert('対象の週を選択してください'); return; }
+      try {
+        await api('POST', '/api/reviews', { week, comment: comment.value });
+        comment.value = '';
+        refresh();
+      } catch (e) { alert(e.message); }
+    }
+
+    // 既存の週を編集フォームに読み込む
+    function editReview(week) {
+      const r = (window.__reviews || []).find(x => x.week === week);
+      if (!r) return;
+      document.getElementById('review-week').value = r.week;
+      document.getElementById('review-comment').value = r.comment;
+      document.getElementById('review-comment').focus();
+      document.getElementById('review-week').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function delReview(id) {
+      if (!confirm('この振り返りを削除しますか?')) return;
+      await api('DELETE', '/api/reviews/' + id);
+      refresh();
+    }
+
+    async function addMemo() {
+      const title = document.getElementById('memo-title');
+      const content = document.getElementById('memo-content');
+      try {
+        await api('POST', '/api/memos', { title: title.value, content: content.value });
+        title.value = ''; content.value = '';
+        refresh();
+      } catch (e) { alert(e.message); }
+    }
+    async function delMemo(id) {
+      if (!confirm('このメモを削除しますか?')) return;
+      await api('DELETE', '/api/memos/' + id);
+      refresh();
+    }
+    async function addTask() {
+      const el = document.getElementById('task-text');
+      try {
+        await api('POST', '/api/tasks', { text: el.value });
+        el.value = '';
+        refresh();
+      } catch (e) { alert(e.message); }
+    }
+    async function toggleTask(id, done) {
+      await api('PATCH', '/api/tasks/' + id, { done });
+      refresh();
+    }
+    async function delTask(id) {
+      if (!confirm('このタスクを削除しますか?')) return;
+      await api('DELETE', '/api/tasks/' + id);
+      refresh();
+    }
+
+    // 週選択の初期値を今週に
+    document.getElementById('review-week').value = currentIsoWeek();
+
+    refresh();
+  </script>
+</body>
+</html>

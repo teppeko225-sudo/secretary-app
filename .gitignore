@@ -1,0 +1,17 @@
+# === 秘密情報（絶対に公開しない） ===
+# Google OAuthクライアントの認証情報
+credentials.json
+# Google連携で取得したアクセストークン
+token.json
+
+# === 個人データ（アプリが自動生成する） ===
+# メモ・タスク・振り返りの保存ファイル
+data.json
+
+# === その他 ===
+node_modules/
+npm-debug.log*
+
+# OS
+Thumbs.db
+.DS_Store
