@@ -1,9 +1,13 @@
 # マイ秘書アプリ
 
-自分専用のシンプルな秘書アプリです。メモ・タスク管理・ダッシュボードを備えています。
-Node.js の標準モジュールのみで動作し、外部ライブラリのインストールは不要です。
+自分専用のシンプルな秘書アプリです。メモ・タスク管理・週次振り返り・ダッシュボードを備えています。
 
-## 使い方
+2通りの動かし方があります。
+
+- **ローカル版**：`node server.js` で起動。データは `data.json` に保存。Googleカレンダー連携あり。
+- **クラウド版（Cloudflare Pages）**：静的フロント＋Pages Functions＋KV で動作。データはKVに保存され、複数端末から使えます。
+
+## 使い方（ローカル版）
 
 1. このフォルダで以下を実行します。
 
@@ -16,6 +20,18 @@ Node.js の標準モジュールのみで動作し、外部ライブラリのイ
    http://localhost:3000
 
 3. 終了するにはターミナルで `Ctrl + C` を押します。
+
+## フォルダ構成
+
+```
+secretary-app/
+  public/index.html   … 画面（フロントエンド／両版で共通）
+  server.js           … ローカル版サーバー（ファイル保存）
+  google.js           … ローカル版のGoogleカレンダー連携
+  functions/api/…     … クラウド版のAPI（Cloudflare Pages Functions・KV保存）
+  wrangler.toml       … Cloudflare設定
+  package.json
+```
 
 ## 機能
 
@@ -77,3 +93,49 @@ secretary-app/
 ### 注意
 - `credentials.json` と `token.json` には秘密情報が含まれます。**他人に共有しないでください。**
 - 同意画面が「テスト」状態のままでも、テストユーザーに登録した自分のアカウントなら利用できます。
+
+---
+
+## Cloudflare Pages へのデプロイ（クラウド版）
+
+静的フロント（`public/`）＋ Pages Functions（`functions/`）＋ KV でクラウド公開します。
+データは Cloudflare KV に保存され、複数端末から利用できます。
+
+### 1. KV 名前空間を作成
+
+1. [Cloudflare ダッシュボード](https://dash.cloudflare.com/) → **Workers & Pages** → **KV**
+2. **Create a namespace** を押し、名前（例：`secretary-data`）で作成
+
+### 2. Pages プロジェクトを作成（GitHub 連携）
+
+1. **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+2. リポジトリ `secretary-app` を選択
+3. ビルド設定：
+   - **Framework preset**：`None`
+   - **Build command**：（空欄でOK）
+   - **Build output directory**：`public`
+4. **Save and Deploy** を押す（初回デプロイが走ります）
+
+### 3. KV をバインド（重要）
+
+1. 作成した Pages プロジェクト → **Settings** → **Functions** → **KV namespace bindings**
+2. **Add binding**：
+   - **Variable name**：`DB`（← この名前でコードが参照します。固定）
+   - **KV namespace**：手順1で作った `secretary-data` を選択
+3. 保存後、**Deployments** から **Retry deployment**（再デプロイ）してバインドを反映
+
+これで `https://<プロジェクト名>.pages.dev` にアクセスすれば動作します。
+以降は `git push` するたびに自動でデプロイされます。
+
+### ローカルでクラウド版を試す（任意）
+
+```
+npm install
+npx wrangler pages dev --kv DB
+```
+
+`http://localhost:8788` で、KV（ローカル簡易版）を使った動作を確認できます。
+
+### 現時点の制約
+- **Googleカレンダー連携はローカル版のみ**対応しています（クラウド版では「今後対応予定」と表示）。
+- クラウド版は**ログイン認証がありません**。URLを知っている人は誰でも閲覧・編集できます。個人用途にとどめるか、Cloudflare Access 等での保護を検討してください。

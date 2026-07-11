@@ -1,0 +1,18 @@
+{
+  "name": "secretary-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "自分専用の秘書アプリ（メモ・タスク・週次振り返り・Googleカレンダー連携）",
+  "scripts": {
+    "dev": "node server.js",
+    "pages:dev": "wrangler pages dev",
+    "pages:deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  },
+  "allowScripts": {
+    "workerd@1.20250718.0": true,
+    "esbuild@0.17.19": true
+  }
+}

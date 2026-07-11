@@ -524,6 +524,13 @@
       let status;
       try { status = await api('GET', '/api/google/status'); } catch (e) { return; }
 
+      if (status.cloud) {
+        statEl.textContent = '-';
+        area.innerHTML = `<div class="empty">
+          Googleカレンダー連携は現在<strong>ローカル版のみ</strong>対応しています。<br>
+          （クラウド版での対応は今後追加予定です）</div>`;
+        return;
+      }
       if (!status.hasCredentials) {
         statEl.textContent = '-';
         area.innerHTML = `<div class="empty">

@@ -1,0 +1,12 @@
+name = "secretary-app"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "public"
+
+# KV バインディング。
+# 本番の namespace ID は Cloudflare ダッシュボードの
+# 「Workers & Pages → KV」で作成し、Pages プロジェクトの
+# Settings → Functions → KV namespace bindings で変数名 DB として割り当てます。
+# ローカルで `wrangler pages dev` を使う場合はこの id を使います。
+# [[kv_namespaces]]
+# binding = "DB"
+# id = "<あなたのKV名前空間ID>"

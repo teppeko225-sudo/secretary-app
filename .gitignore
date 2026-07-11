@@ -12,6 +12,10 @@ data.json
 node_modules/
 npm-debug.log*
 
+# Cloudflare / wrangler
+.wrangler/
+.dev.vars
+
 # OS
 Thumbs.db
 .DS_Store

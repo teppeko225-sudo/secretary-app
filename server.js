@@ -274,7 +274,7 @@ const server = http.createServer(async (req, res) => {
 
   // トップページ (index.html) を配信
   if (url === '/' || url === '/index.html') {
-    const html = fs.readFileSync(path.join(__dirname, 'index.html'));
+    const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(html);
   }
