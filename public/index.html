@@ -378,6 +378,10 @@
         <div class="stat-icon">✔️</div>
         <div><div class="num" id="stat-done">0</div><div class="label">完了タスク件数</div></div>
       </div>
+      <div class="stat warn">
+        <div class="stat-icon">⏳</div>
+        <div><div class="num" id="stat-open">0</div><div class="label">未完了タスク件数</div></div>
+      </div>
       <div class="stat cal">
         <div class="stat-icon">📅</div>
         <div><div class="num" id="stat-events">-</div><div class="label">今後の予定</div></div>
@@ -595,6 +599,7 @@
       document.getElementById('stat-memos').textContent = memos.length;
       document.getElementById('stat-tasks').textContent = tasks.length;
       document.getElementById('stat-done').textContent = tasks.filter(t => t.done).length;
+      document.getElementById('stat-open').textContent = tasks.filter(t => !t.done).length;
       document.getElementById('memo-count').textContent = memos.length;
       document.getElementById('task-count').textContent = tasks.length;
       document.getElementById('review-count').textContent = reviews.length;
