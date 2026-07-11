@@ -135,6 +135,7 @@
     }
     .stat.warn .stat-icon { background: color-mix(in srgb, var(--amber) 15%, var(--surface)); }
     .stat.cal  .stat-icon { background: color-mix(in srgb, var(--teal) 15%, var(--surface)); }
+    .stat.done .stat-icon { background: color-mix(in srgb, var(--green) 15%, var(--surface)); }
     .stat .num {
       font-size: 27px; font-weight: 700; line-height: 1.05;
       letter-spacing: -.02em; font-variant-numeric: tabular-nums;
@@ -142,6 +143,7 @@
     .stat .label { font-size: 12px; color: var(--muted); margin-top: 3px; letter-spacing: .01em; }
     .stat.warn .num { color: var(--amber); }
     .stat.cal  .num { color: var(--teal); }
+    .stat.done .num { color: var(--green); }
 
     /* ===== カード ===== */
     .card {
@@ -372,9 +374,9 @@
         <div class="stat-icon">✅</div>
         <div><div class="num" id="stat-tasks">0</div><div class="label">タスク</div></div>
       </div>
-      <div class="stat warn">
-        <div class="stat-icon">⏳</div>
-        <div><div class="num" id="stat-open">0</div><div class="label">未完了タスク</div></div>
+      <div class="stat done">
+        <div class="stat-icon">✔️</div>
+        <div><div class="num" id="stat-done">0</div><div class="label">完了タスク件数</div></div>
       </div>
       <div class="stat cal">
         <div class="stat-icon">📅</div>
@@ -585,7 +587,7 @@
 
       document.getElementById('stat-memos').textContent = memos.length;
       document.getElementById('stat-tasks').textContent = tasks.length;
-      document.getElementById('stat-open').textContent = tasks.filter(t => !t.done).length;
+      document.getElementById('stat-done').textContent = tasks.filter(t => t.done).length;
       document.getElementById('memo-count').textContent = memos.length;
       document.getElementById('task-count').textContent = tasks.length;
       document.getElementById('review-count').textContent = reviews.length;
